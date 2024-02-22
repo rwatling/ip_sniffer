@@ -9,7 +9,6 @@ use std::thread;
 const MAX: u16 = 65535;
 
 struct Arguments {
-	flag: String,
 	ipaddr: IpAddr,
 	threads: u16,
 }
@@ -21,26 +20,35 @@ impl Arguments {
 		} else if args.len() > 4 {
 			return Err("too many arguments");
 		}
-		
+
 		let f = args[1].clone();
-		
 		if let Ok(ipaddr) = IpAddr::from_str(&f) {
-			return Ok(Arguments {flag: String::from(""), ipaddr, threads: 4});
-		} else {
+			return Ok(Arguments {ipaddr, threads: 4});
+		} else if args.len() == 4 {
+			// Break out early if "-h" is encountered first
 			let flag = args[1].clone();
 			if flag.contains("-h") || flag.contains("--help") {
 				println!("Usage: \n\t-j <num-threads>\n\t-h or --help to show this message");
 				return Err("help");
 			} else if flag.contains("-j") {
-				let ipaddr = match IpAddr::from_str(&args[3]) {
-					Ok(s) => s,
-					Err(_) => return Err("Not a valid IPADDR; must be IPv4 or IPc6 address")
-				};
 				let threads = match args[2].parse::<u16>(){
 					Ok(s) => s,
 					Err(_) => return Err("Failed to parse a thread number")
 				};
-				return Ok(Arguments{threads, flag, ipaddr});
+				let ipaddr = match IpAddr::from_str(&args[3]) {
+					Ok(s) => s,
+					Err(_) => return Err("Not a valid IPADDR; must be IPv4 or IPc6 address")
+				};
+				return Ok(Arguments{threads, ipaddr});
+			} else {
+				return Err("Invalid syntax");
+			}
+		} else {
+			// Print help message if args length < 4 and -h option is present
+			let flag = args[1].clone();
+			if flag.contains("-h") || flag.contains("--help") {
+				println!("Usage: \n\t-j <num-threads>\n\t-h or --help to show this message");
+				return Err("help");
 			} else {
 				return Err("Invalid syntax");
 			}
